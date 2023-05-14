@@ -20,111 +20,142 @@ import java.util.ResourceBundle;
 
 public class HelloController implements Initializable {
     //переменные берутся из fxml файла обращение к ним идет по их id
-
     @FXML
     public TextField ipText;
-    @FXML
-    //например Button fx:id="connectServ" обращение к свойствам кнопки будет происходить по этой перменной, благодаря ему мы имеед доступ ко всем свойствам кнопки.
-    public  Button connectServ;
     private Network network;
-
-    @FXML
-    TextField msgField;
-
-    @FXML
-    TextArea mainArea;
     @FXML
     Button connect;
     @FXML
     public  Label timeInWork;
     @FXML
     public Label infoserv;
-
     int count = 0;
+    int varToChecking = 0;
     long now;
 
+    private static String info;
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        if(new File("config.txt").exists()) {
+        if(new File("config.txt").exists()){
+            //устанавливаем ip и порт из конфига
             ipText.setText(readFile("config.txt"));
         }
-        else{
-            saveToDataBase("");
-        }
-
     }
-    public void Connect(){
-        saveToDataBase(ipText.getText());
+    public void sendMsgAction(ActionEvent actionEvent) throws IOException, InterruptedException {
+        //сохраняем данные с текста в конфиг файл
+        saveConfigFile(ipText.getText());
 
-        //connect.setText("Начать работу");
-        network = new Network(ipText.getText());
-        connectServ.setDisable(true);
-        try {
-            Thread.sleep(500);
-            if(Objects.equals(Network.infoServ, "error")){
-                infoserv.setText("Сервер не отвечает. Попробуйте перезапустить \nклиент и удостоверьтесь, что сервер запущен.");
-                connect.setText("Закрыть программу.");
-            }
-          }
-        catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-    }
+        //получаем с текста информациб о будущем подключении
+        String infoConnection = ipText.getText();
 
-    public void sendMsgAction(ActionEvent actionEvent) throws IOException {
-
-        if(Objects.equals(Network.infoServ, "error")){
-            //если из класса Network переменная infoserv имеет значение error, подключение создано не будет и мы завершим процессы
-            infoserv.setText("Сервер не отвечает. Попробуйте перезапустить \nклиент и удостоверьтесь, что сервер запущен.");
-            connect.setText("Закрыть программу.");
-            System.exit(0);
-
+        //если данные не введены выдать ошибку.
+        if(infoConnection.length()==0)
+        {
+            infoserv.setText("Данные не введены!");
         }
         else
         {
-            now = new Date().getTime();
-            //таймер проведенного времени в работе
-            Timeline timeline = new Timeline (
-                    new KeyFrame(
-                            Duration.millis(1000), //1000 мс = 1 сек
-                            ae -> {
-                                try {
-                                    timeInWork.setText(longToDate(Math.abs(now - new Date().getTime())));
-                                } catch (ParseException e) {
-                                    throw new RuntimeException(e);
+            //проверям, ввел ли пользователь порт.
+            if(infoConnection.contains(":"))
+            {
+                //достаем из строки порт и айпи адресс.
+                int index = infoConnection.indexOf(":");
+                String ip = infoConnection.substring(0,index);
+                int port = Integer.parseInt(infoConnection.replace(ip+":",""));
+
+                try {
+                    //создаем соединение в новом потоке
+                    new Thread(()->{
+                            network = new Network(ip,port);
+                        }).start();
+                    //получаем текущую дату
+                        now = new Date().getTime();
+                        //таймер проведенного слежки за состоянием сервера
+                        Timeline timeline = new Timeline(
+                                new KeyFrame(
+                                        //задержка таймера
+                                        Duration.millis(1000), //1000 мс = 1 сек
+                                        ae -> {
+                                            try {
+                                                //если сервер выдал ошибку
+                                                if(Objects.equals(info, "error")){
+                                                    infoserv.setText("Ошибка подключения!");
+                                                    timeInWork.setText("Сервер не работает! Перезапустите приложение");
+                                                    connect.setText("ЗАКРЫТЬ");
+                                                }
+                                                else
+                                                {
+                                                    //если счетчик таймера меньше 5
+                                                    if(varToChecking<=5)
+                                                    {
+                                                        //устанавливаем статус проверка и инкрементируем счетчик
+                                                        varToChecking++;
+                                                        timeInWork.setText("Проверка..");
+                                                    }
+                                                    else
+                                                    {
+                                                        //иначе показываем время которое пользователь провел в работе.
+                                                        timeInWork.setText(longToDate(Math.abs(now - new Date().getTime())));
+                                                    }
+                                                }
+                                            } catch (ParseException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        })
+                        );
+                        timeline.setCycleCount(Integer.MAX_VALUE); //Ограничим число повторений
+                        timeline.play(); //Запускаем
+
+                        //счетчик для переключения текста на кнопки
+                        count++;
+                        connect.setText("Закончить работу");
+                        if(count%2==0)
+                        {
+                            connect.setText("Закончить работу");
+                            System.exit(0);
+                        }
+                        else
+                        {
+                            //отправка файлов и сообщений
+                            new Thread(()->
+                            {
+                                while (true)
+                                {
+                                    try {
+                                        Thread.sleep(1000);
+                                        if((network!=null && !Objects.equals(Network.infoServ, "error")))//Если нетворк есть сервер не выдал ошибку.
+                                        {
+                                            //Отправляем данные и устанавливаем статус о сервере
+                                            network.sendMessage(System.getProperty("user.name")+"\\"+EnumerateWindows.activeWindow()+"\\"+EnumerateWindows.activeTitleWindow());
+                                            network.sendDelay(1000);
+                                            network.sendFile();
+                                            info="connect";
+                                        }
+                                        else
+                                        {
+                                            //устанавливаем статус сервера
+                                            info = "error";
+                                        }
+                                    }
+                                    catch (IOException | InterruptedException e)
+                                    {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
-                            }
-                    )
-            );
-            timeline.setCycleCount((int) Long.MAX_VALUE); //Ограничим число повторений
-            timeline.play(); //Запускаем
-
-
-            count++;
-            connect.setText("Закончить работу");
-            if(count%2==0){
-                connect.setText("Закончить работу");
-                System.exit(0);
-            }else{
-
-                new Thread(()->{
-                    while (true){
-                        try {
-                            //timeInWork.setText(String.valueOf(now - new Date().getTime()));
-                            network.sendMessage(System.getProperty("user.name")+"\\"+EnumerateWindows.activeWindow()+"\\"+EnumerateWindows.activeTitleWindow());
-                            network.sendDelay(1000);
-                            network.send();
-
-                            Thread.sleep(1000);
-                        } catch (IOException | InterruptedException e) {
-                            System.out.println("ERR213213OR");
-                            throw new RuntimeException(e);
+                            }).start();
                         }
                     }
-                }).start();
+                catch (Exception ex)
+                {
+                    //вывод какой либо из ошибок
+                    System.out.println("Error");
+                }
+            }
+            else
+            {
+                infoserv.setText("Порт не указан!");
             }
         }
-        //network.sendMessage("Hello");
     }
     public String longToDate(long timeInProject) throws ParseException {
 
@@ -135,7 +166,7 @@ public class HelloController implements Initializable {
 
         return diffDaysAll+" days "+diffHoursAll+" hours "+diffMinutesAll+" min "+diffSecondsAll+" sec";
     }
-    public void saveToDataBase(String text){
+    public void saveConfigFile(String text){
 
         try(FileWriter writer = new FileWriter("config.txt", false))
         {

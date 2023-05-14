@@ -18,20 +18,10 @@ import javax.imageio.ImageIO;
 
 public class Network {
     private Channel Channel;
-    public static String inf = "";
-    private static final String HOST = "192.168.0.105";
-    //private static final String HOST = "18.177.53.48";
-    private static final int port = 8190;
-
-
-    private int byteRead;
-    private volatile int start = 0;
-    private volatile int lastLength = 0;
-    public RandomAccessFile randomAccessFile;
     private FileUploadFile fileUploadFile;
     public static String infoServ;
 
-    public Network(String ip){
+    public Network(String ip,int port){
         new Thread(()->{//запуск если не сделать в потоке, то граф интерфейс не откроется
             EventLoopGroup workerGroup = new NioEventLoopGroup();//обработка сетевых событый
             try {
@@ -64,8 +54,6 @@ public class Network {
                                                         Channel.closeFuture();
                                                         System.exit(1);
                                                     }
-                                                    inf+=s;
-                                                    System.out.print(s);
                                                 }
                                             }
                                         })
@@ -79,13 +67,13 @@ public class Network {
             } catch (Exception e) {
                 //информация о состоянии подключения к серверу, сохраняется во внешнюю переменную что бы отследить состояние в другом файле(файле графического интерфейса).
                 infoServ = "error";
-
-                System.out.println("ERROR");
-                throw new RuntimeException(e);
+                //throw new RuntimeException(e);
             }
         }).start();
 
     }
+
+
 
     public void sendMessage(String str){
         Channel.writeAndFlush(str);
@@ -93,27 +81,22 @@ public class Network {
     public void sendDelay(int delay){
         Channel.writeAndFlush(delay);
     }
+    public void sendFile() throws IOException, InterruptedException {
+        String currentDir = System.getProperty("user.dir");//папка проэкта
+        String format = "png";
+        String fullScreenName = "screen"+"."+format;
+        String pathToScreen = currentDir +"\\"+fullScreenName;
 
-    public static String currentDir = System.getProperty("user.dir");//папка проэкта
-    public static String pathToSaveScreen = currentDir;
-    public static String format = "png";
-    public static String screenName = "screen";
-    public static String fullScreenName = screenName+"."+format;
-    public static String pathToScreen = pathToSaveScreen+"\\"+fullScreenName;
-
-    public void send() throws IOException, InterruptedException {
         int wight=1920;
         int hight=1080;
         double k = 0.6;//40%
 
-        SaveScreen(pathToSaveScreen, format, fullScreenName);
-        //Thread.sleep(500);
-        resizeFile(pathToScreen,pathToScreen, (int) (wight*k), (int) (hight*k));
-        //Thread.sleep(500);
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //получаем файл и отправляем его
-        fileUploadFile = getFile(pathToScreen);
-        sendFile(Channel);
+        SaveScreen(currentDir, format, fullScreenName);//сохраняем скриншот
+
+        resizeFile(pathToScreen,pathToScreen, (int) (wight*k), (int) (hight*k));//изменяем его качество
+
+        fileUploadFile = getFile(pathToScreen);//получаем файл
+        sendFile(Channel);//отправляем
 
     }
 
@@ -148,13 +131,15 @@ public class Network {
         return uploadFile;
     }
     public void sendFile(Channel ctx) throws IOException {
+        RandomAccessFile randomAccessFile;
+        int lastLength = 0;
         randomAccessFile = new RandomAccessFile(fileUploadFile.getFile(), "r");
         fileUploadFile.setStarPos(0);
         fileUploadFile.setEndPos((int) randomAccessFile.length());
         randomAccessFile.seek(fileUploadFile.getStarPos());
-        lastLength = (int) randomAccessFile.length();
         lastLength = fileUploadFile.getEndPos();
         byte[] bytes = new byte[lastLength];
+        int byteRead;
         if ((byteRead = randomAccessFile.read(bytes)) != -1) {
             fileUploadFile.setEndPos(byteRead);
             fileUploadFile.setBytes(bytes);
