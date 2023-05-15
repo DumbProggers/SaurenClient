@@ -7,19 +7,19 @@
 <?import javafx.scene.text.Font?>
 
 <VBox prefHeight="167.0" prefWidth="271.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.sauren.sauren.HelloController">
-   <VBox alignment="TOP_CENTER" prefHeight="203.0" prefWidth="279.0" style="-fx-background-color: #D3D3D3;">
+   <VBox alignment="TOP_CENTER" prefHeight="203.0" prefWidth="279.0" style="-fx-background-color: #6788db;">
       <children>
-         <Label fx:id="timeInWork" />
+         <Label fx:id="timeInWork" style="-fx-text-fill: white;" />
          <VBox prefHeight="13.0" prefWidth="271.0" />
          <TextField fx:id="ipText" alignment="TOP_CENTER" cacheShape="false" centerShape="false" focusTraversable="false" prefHeight="25.0" prefWidth="686.0" promptText="IP:PORT" scaleShape="false" style="-fx-border-radius: 25; -fx-background-color: #F5FFFA;" />
          <VBox prefHeight="31.0" prefWidth="271.0" />
-           <Button fx:id="connect" onAction="#sendMsgAction" prefHeight="34.0" prefWidth="141.0" style="-fx-background-color: #C0C0C0; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #708090;" text="НАЧАТЬ РАБОТУ" textAlignment="CENTER">
+           <Button fx:id="connect" onAction="#sendMsgAction" prefHeight="34.0" prefWidth="141.0" style="-fx-background-color: #4e40ed; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #4e40ed; -fx-text-fill: white;" text="НАЧАТЬ РАБОТУ" textAlignment="CENTER">
             <font>
                <Font size="11.0" />
             </font>
          </Button>
          <VBox prefHeight="14.0" prefWidth="318.0" />
-         <Label fx:id="infoserv" />
+         <Label fx:id="infoserv" style="-fx-text-fill: white;" />
       </children>
    </VBox>
 </VBox>
