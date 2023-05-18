@@ -16,7 +16,6 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
     }
-
     @Override
     public void stop() throws Exception {
         super.stop();

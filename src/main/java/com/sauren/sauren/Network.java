@@ -5,8 +5,13 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Collection;
 import java.util.Objects;
 
+import com.sauren.sauren.UIelements.Message;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.Label;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -14,12 +19,20 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
 import javax.imageio.ImageIO;
 
 public class Network {
     private Channel Channel;
     private FileUploadFile fileUploadFile;
     public static String infoServ;
+
+    public static String message;
 
     public Network(String ip,int port){
         new Thread(()->{//запуск если не сделать в потоке, то граф интерфейс не откроется
@@ -47,13 +60,15 @@ public class Network {
                                             @Override
                                             protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object o) throws Exception {
                                                 if(o instanceof String){
-                                                    String s = (String) o;
-                                                    System.out.println(s);
-                                                    if (Objects.equals(s, "cloze")){
-                                                        Channel.close();
-                                                        Channel.closeFuture();
-                                                        System.exit(1);
-                                                    }
+                                                    String mes = (String) o;
+
+                                                    mes = mes.substring(1);
+                                                    int index = mes.indexOf("$");
+                                                    String command = mes.substring(0,index);
+                                                    String arg = mes.substring(index+1);
+
+                                                    if(command.equals("MSG"))
+                                                        message = arg;
                                                 }
                                             }
                                         })
@@ -63,14 +78,12 @@ public class Network {
 
                 ChannelFuture future = b.connect(ip,port).sync();
                 future.channel().closeFuture().sync();//выход с канала если снаружи дать команду остановки.
-
             } catch (Exception e) {
                 //информация о состоянии подключения к серверу, сохраняется во внешнюю переменную что бы отследить состояние в другом файле(файле графического интерфейса).
                 infoServ = "error";
                 //throw new RuntimeException(e);
             }
         }).start();
-
     }
 
 

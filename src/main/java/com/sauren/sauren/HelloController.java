@@ -1,5 +1,7 @@
 package com.sauren.sauren;
 
+import com.sauren.sauren.UIelements.Message;
+import com.sauren.sauren.UIelements.MessageController;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -9,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.*;
@@ -32,14 +35,41 @@ public class HelloController implements Initializable {
     int count = 0;
     int varToChecking = 0;
     long now;
+    private static HelloController mainApp;
 
     private static String info;
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        //Message.newWindow("Message!!!");
         if(new File("config.txt").exists()){
             //устанавливаем ip и порт из конфига
             ipText.setText(readFile("config.txt"));
         }
+        Timeline timeline = new Timeline(
+                new KeyFrame(
+                        //задержка таймера
+                        Duration.millis(1000), //1000 мс = 1 сек
+                        ae -> {
+                            if(Network.message!=null){
+                                System.out.println(Network.message);
+
+                                Message message = new Message();
+                                try {
+                                    message.start(new Stage());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                Network.message = null;
+                            }
+                        })
+        );
+        timeline.setCycleCount(Integer.MAX_VALUE); //Ограничим число повторений
+        timeline.play(); //Запускаем
+
+        //
+
+
     }
     public void sendMsgAction(ActionEvent actionEvent) throws IOException, InterruptedException {
         //сохраняем данные с текста в конфиг файл
