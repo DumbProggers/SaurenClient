@@ -32,14 +32,15 @@ public class HelloController implements Initializable {
     public  Label timeInWork;
     @FXML
     public Label infoserv;
-    int count = 0;
+    private static boolean isConnected=false;
     int varToChecking = 0;
     long now;
     private static HelloController mainApp;
 
     private static String info;
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    public void initialize(URL url, ResourceBundle resourceBundle)
+    {
         //Message.newWindow("Message!!!");
         if(new File("config.txt").exists()){
             //устанавливаем ip и порт из конфига
@@ -71,33 +72,36 @@ public class HelloController implements Initializable {
 
 
     }
-    public void sendMsgAction(ActionEvent actionEvent) throws IOException, InterruptedException {
+    public void sendMsgAction(ActionEvent actionEvent) throws IOException, InterruptedException
+    {
+        if(isConnected)
+        {
+            connect.setText("Закончить работу");
+            System.exit(0);
+        }
         //сохраняем данные с текста в конфиг файл
         saveConfigFile(ipText.getText());
 
-        //получаем с текста информациб о будущем подключении
+        //получаем с текста информацию о будущем подключении
         String infoConnection = ipText.getText();
 
         //если данные не введены выдать ошибку.
         if(infoConnection.length()==0)
         {
             infoserv.setText("Данные не введены!");
-        }
-        else
-        {
-            //проверям, ввел ли пользователь порт.
+            return;
+        }//иначе:
+            //проверяем, ввел ли пользователь порт.
             if(infoConnection.contains(":"))
             {
                 //достаем из строки порт и айпи адресс.
                 int index = infoConnection.indexOf(":");
                 String ip = infoConnection.substring(0,index);
                 int port = Integer.parseInt(infoConnection.replace(ip+":",""));
-
-                try {
+                try
+                {
                     //создаем соединение в новом потоке
-                    new Thread(()->{
-                            network = new Network(ip,port);
-                        }).start();
+                    new Thread(()->{ network = new Network(ip,port);    }).start();
                     //получаем текущую дату
                         now = new Date().getTime();
                         //таймер проведенного слежки за состоянием сервера
@@ -137,15 +141,9 @@ public class HelloController implements Initializable {
                         timeline.play(); //Запускаем
 
                         //счетчик для переключения текста на кнопки
-                        count++;
+                        isConnected=true;
                         connect.setText("Закончить работу");
-                        if(count%2==0)
-                        {
-                            connect.setText("Закончить работу");
-                            System.exit(0);
-                        }
-                        else
-                        {
+
                             //отправка файлов и сообщений
                             new Thread(()->
                             {
@@ -173,19 +171,18 @@ public class HelloController implements Initializable {
                                     }
                                 }
                             }).start();
-                        }
                     }
                 catch (Exception ex)
                 {
                     //вывод какой либо из ошибок
-                    System.out.println("Error");
+                    System.out.println(">------|Error|-------");
+                    ex.printStackTrace();
                 }
             }
             else
             {
                 infoserv.setText("Порт не указан!");
             }
-        }
     }
     public String longToDate(long timeInProject) throws ParseException {
 
