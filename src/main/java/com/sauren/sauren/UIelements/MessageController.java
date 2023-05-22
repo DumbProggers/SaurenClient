@@ -20,7 +20,8 @@ public class MessageController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         message.setText(Network.message);
     }
-    public void setActionButton(){
+    public void setActionButton()
+    {
         Stage stage = (Stage) button.getScene().getWindow();
         stage.close();
     }

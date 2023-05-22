@@ -30,43 +30,24 @@ import javafx.scene.text.Text;
 import java.io.IOException;
 
 public class Message extends Application{
-    /* public static void newWindow(String title){
-           Label message = new Label(title);
-
-           Stage window = new Stage();
-           window.initModality(Modality.WINDOW_MODAL);
-           Pane pane = new Pane();
-
-           pane.getChildren().add(message);
-
-           //Button btn = new Button("OK");
-
-           //btn.setOnAction(event -> window.close());
-           //pane.getChildren().addAll(btn);
-
-           Scene scene = new Scene(pane,200,100);
-
-           window.setScene(scene);
-           window.setTitle(title);
-           window.show();
-   }
-    * */
-
         @Override
-        public void start(Stage stage) throws IOException {
+        public void start(Stage stage) throws IOException
+        {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Message.fxml"));
                 Scene scene = new Scene(fxmlLoader.load(), 425,218 );
                 stage.setTitle("Work");
                 stage.setScene(scene);
+                stage.setAlwaysOnTop(true);
                 stage.show();
         }
         @Override
-        public void stop() throws Exception {
+        public void stop() throws Exception
+        {
                 super.stop();
                 System.exit(0);
         }
 
         public static void main(String[] args) {
-                launch();
+                launch(args);
         }
 }
