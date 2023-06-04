@@ -1,10 +1,12 @@
 module com.example.client {
     requires javafx.controls;
     requires javafx.fxml;
-    requires netty.all;
+    //requires netty.all;
     requires java.desktop;
     requires jna;
     requires platform;
+    requires io.netty.transport;
+    requires io.netty.codec;
 
 
     opens com.sauren.sauren to javafx.fxml;
