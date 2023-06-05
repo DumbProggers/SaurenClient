@@ -16,6 +16,8 @@ import javafx.util.Duration;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Objects;
@@ -25,6 +27,8 @@ public class HelloController implements Initializable {
     //переменные берутся из fxml файла обращение к ним идет по их id
     @FXML
     public TextField ipText;
+    @FXML
+    public TextField name;
     private Network network;
     @FXML
     Button connect;
@@ -35,17 +39,33 @@ public class HelloController implements Initializable {
     private static boolean isConnected=false;
     int varToChecking = 0;
     long now;
+
+    private String userName;
     private static HelloController mainApp;
 
     private static String info;
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle)
     {
-        //Message.newWindow("Message!!!");
-        if(new File("config.txt").exists()){
-            //устанавливаем ip и порт из конфига
-            ipText.setText(readFile("config.txt"));
+
+        if(!Files.exists(Path.of("config.txt"))){
+            try {
+                Files.createFile(Path.of("config.txt"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        String cfg = readFile("config.txt");
+        int index = cfg.indexOf("\n");
+        if(index != -1){
+            userName = cfg.substring(index).replace("\n","");
+            name.setText(userName);
+            ipText.setText(cfg.replace(userName,""));
+        }else {
+            ipText.setText(cfg);
+        }
+
+        name.setPromptText(System.getProperty("user.name"));
         Timeline timeline = new Timeline(
                 new KeyFrame(
                         //задержка таймера
@@ -74,6 +94,14 @@ public class HelloController implements Initializable {
     }
     public void sendMsgAction(ActionEvent actionEvent) throws IOException, InterruptedException
     {
+        userName = name.getText();
+        saveConfigFile(ipText.getText()+"\n"+userName);
+
+
+        if(userName.equals("")){
+            userName = System.getProperty("user.name");
+        }
+
         if(isConnected)
         {
             connect.setText("Закончить работу");
@@ -154,7 +182,7 @@ public class HelloController implements Initializable {
                                         if((network!=null && !Objects.equals(Network.infoServ, "error")))//Если нетворк есть сервер не выдал ошибку.
                                         {
                                             //Отправляем данные и устанавливаем статус о сервере
-                                            network.sendMessage(System.getProperty("user.name")+"\\"+EnumerateWindows.activeWindow()+"\\"+EnumerateWindows.activeTitleWindow());
+                                            network.sendMessage(userName+"\\"+EnumerateWindows.activeWindow()+"\\"+EnumerateWindows.activeTitleWindow());
                                             network.sendDelay(1000);
                                             network.sendFile();
                                             info="connect";
