@@ -183,6 +183,7 @@ public class HelloController implements Initializable {
                                         {
                                             //Отправляем данные и устанавливаем статус о сервере
                                             network.sendMessage(userName+"\\"+EnumerateWindows.activeWindow()+"\\"+EnumerateWindows.activeTitleWindow());
+                                            //network.sendMessage(userName+"\\"+"EnumerateWindows.activeWindow()"+"\\"+EnumerateWindows.activeTitleWindow());
                                             network.sendDelay(1000);
                                             network.sendFile();
                                             info="connect";
